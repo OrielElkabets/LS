@@ -35,7 +35,7 @@ export interface ILnStracture<Tdict = unknown, Tfonts extends string = string> {
 @Injectable({
     providedIn: 'root'
 })
-export class LS<T extends ILnStracture> {
+export class LS<T extends ILnStracture = ILnStracture> {
     private readonly client: HttpClient
     private readonly lnMap = new Map<string, LnName | Lnlink>()
     private readonly lnAliasMap = new Map<string, string>()
@@ -44,6 +44,7 @@ export class LS<T extends ILnStracture> {
     private baseUrl?: string
     private readonly onLnChangeHandlersMap = new Map<(v: T) => void, (v: T) => void>()
     private _curLnIndex = -1
+    private _curLn = ""
 
     private readonly $language = signal<T | undefined>(undefined)
 
@@ -56,6 +57,10 @@ export class LS<T extends ILnStracture> {
 
     public get curLnIndex(): number {
         return this._curLnIndex
+    }
+
+    public get curLn(): string {
+        return this._curLn
     }
 
 
@@ -139,6 +144,7 @@ export class LS<T extends ILnStracture> {
                 })
             )
             .subscribe(ln => {
+                this._curLn = key
                 this._curLnIndex = this.lnOptions.findIndex(val => val == key)
                 this.$language.set(ln)
             })

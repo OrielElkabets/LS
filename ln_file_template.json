@@ -1,0 +1,13 @@
+{
+    "info": {
+        "direction": "ltr",
+        "fonts": {
+            "regular": {
+                "family": "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                "weight": "normal",
+                "style": "normal"
+            }
+        }
+    },
+    "dict": {}
+}
