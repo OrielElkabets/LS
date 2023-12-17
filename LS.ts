@@ -1,7 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Signal, computed, inject, signal } from "@angular/core";
 import { EMPTY, catchError, tap } from "rxjs";
-import { LnModel } from "../models/language";
 
 type LnName = {
     fileName: string,
@@ -50,13 +49,13 @@ class Data {
     constructor(public client: HttpClient) { }
 }
 
-class LS<TLnModel> {
+export class LS<TLnModel> {
     private readonly client: HttpClient
     private readonly baseUrl?: string
     private readonly lnsMap = new Map<string, LnConfig>()
     private readonly localStorageKey?: string
     private readonly aliasesMap?: Map<string, string>
-    private readonly onLnChangeHandlersMap = new  Map<Action<TLnModel>, Action<TLnModel>>()
+    private readonly onLnChangeHandlersMap = new Map<Action<TLnModel>, Action<TLnModel>>()
     private readonly $language = signal<TLnModel | undefined>(undefined)
     private readonly _$curLn = signal<string | undefined>(undefined)
 
@@ -71,7 +70,7 @@ class LS<TLnModel> {
         return this._$curLn.asReadonly()
     }
 
-    constructor(data: Data) {
+    private constructor(data: Data) {
         this.client = data.client
         this.baseUrl = data.baseUrl
         this.$languages = signal(data.languages).asReadonly()
@@ -92,8 +91,12 @@ class LS<TLnModel> {
         })
     }
 
+    static builder<TLnModel>() {
+        return new LSBuilder<TLnModel>(<T>(data:Data) => new LS<T>(data))
+    }
+
     addOnLnChangeHandler(handler: Action<TLnModel>, runNow?: boolean) {
-        if(runNow && this.$isLnLoaded()) handler(this.$language()!)
+        if (runNow && this.$isLnLoaded()) handler(this.$language()!)
         this.onLnChangeHandlersMap.set(handler, handler)
         return this
     }
@@ -164,8 +167,9 @@ class LS<TLnModel> {
     }
 }
 
-export class LSBuilder<TLnModel> {
+class LSBuilder<TLnModel> {
     private readonly data = new Data(inject(HttpClient))
+    constructor(private createLS: <T>(data: Data) => LS<T>) { }
 
     setBaseUrl(baseUrl: string) {
         this.data.baseUrl = baseUrl
@@ -208,6 +212,6 @@ export class LSBuilder<TLnModel> {
     }
 
     build() {
-        return new LS<TLnModel>(this.data)
+        return this.createLS<TLnModel>(this.data)
     }
 }
