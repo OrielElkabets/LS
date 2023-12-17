@@ -207,7 +207,7 @@ class LSBuilder<TLnModel> {
         return this
     }
 
-    useCssVariables<TFonts extends string>() {
+    createCssVariables<TFonts extends string>() {
         this.data.createCssVariables = true
         return this as LSBuilder<TLnModel & LsLnInfo<TFonts>>
     }
