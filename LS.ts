@@ -1,5 +1,5 @@
 import { HttpClient } from "@angular/common/http";
-import { Signal, computed, inject, signal } from "@angular/core";
+import { DestroyRef, Signal, computed, inject, signal } from "@angular/core";
 import { EMPTY, catchError, tap } from "rxjs";
 
 type LnName = {
@@ -12,7 +12,7 @@ type LnUrl = {
     fileName?: undefined
 }
 
-type LnConfig = { displayName: string } & (LnName | LnUrl)
+type LnConfig = { ln: string } & (LnName | LnUrl)
 
 type Direction = "rtl" | "ltr"
 type FontWeight = "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900" | "bold" | "normal" | "lighter"
@@ -32,7 +32,7 @@ type LsLnInfo<Tfonts extends string = string> = {
 }
 
 type LnAlias = {
-    displayName: string
+    ln: string
     aliases: string[]
 }
 
@@ -47,6 +47,22 @@ class Data {
     createCssVariables?: boolean
 
     constructor(public client: HttpClient) { }
+}
+
+type IDisposeable = {
+    dispose(): void
+}
+
+class Cleanup implements IDisposeable {
+    private cleanupCbs: (() => void)[] = []
+    add(cb: () => void) {
+        this.cleanupCbs.push(cb)
+    }
+    dispose() {
+        for (const cb of this.cleanupCbs) {
+            cb()
+        }
+    }
 }
 
 export class LS<TLnModel> {
@@ -79,7 +95,7 @@ export class LS<TLnModel> {
         this.aliasesMap = data.aliasesMap
 
         if (data.createCssVariables != true) return
-        this.addOnLnChangeHandler(ln => {
+        this.onLnChange(ln => {
             const info = (ln as LsLnInfo).lsInfo
 
             document.documentElement.style.setProperty("--ls_dir", info.direction)
@@ -92,18 +108,20 @@ export class LS<TLnModel> {
     }
 
     static builder<TLnModel>() {
-        return new LSBuilder<TLnModel>(<T>(data:Data) => new LS<T>(data))
+        return new LSBuilder<TLnModel>(<T>(data: Data) => new LS<T>(data))
     }
 
-    addOnLnChangeHandler(handler: Action<TLnModel>, runNow?: boolean) {
-        if (runNow && this.$isLnLoaded()) handler(this.$language()!)
+    onLnChange(handler: Action<TLnModel>, options?: { runNow?: boolean } & ({ destroyRef: DestroyRef, manualCleanup?: false } | { destroyRef?: undefined, manualCleanup: true })) {
+        const cleanup = new Cleanup()
+        cleanup.add(() => this.onLnChangeHandlersMap.delete(handler))
+        if (options?.manualCleanup != true) {
+            const df = options?.destroyRef ?? inject(DestroyRef)
+            const onDestroyCleanup = df.onDestroy(() => this.onLnChangeHandlersMap.delete(handler))
+            cleanup.add(onDestroyCleanup)
+        }
+        if (options?.runNow && this.$isLnLoaded()) handler(this.$language()!)
         this.onLnChangeHandlersMap.set(handler, handler)
-        return this
-    }
-
-    removeOnLnChangeHandler(handler: Action<TLnModel>) {
-        this.onLnChangeHandlersMap.delete(handler)
-        return this
+        return cleanup as IDisposeable
     }
 
     setLn(key: string) {
@@ -178,12 +196,12 @@ class LSBuilder<TLnModel> {
 
     registerLns(...lns: LnConfig[]) {
         for (const ln of lns) {
-            this.data.languages.push(ln.displayName)
+            this.data.languages.push(ln.ln)
 
             if (ln.fileName != undefined) {
                 if (this.data.baseUrl == undefined) throw "to be able to provide file name insted of url you must provide base url (use setBaseUrl before ln's registration)"
             }
-            this.data.lnsMap.set(ln.displayName, ln)
+            this.data.lnsMap.set(ln.ln, ln)
         }
 
         return this
@@ -204,7 +222,7 @@ class LSBuilder<TLnModel> {
 
         for (const ln of lnAliases) {
             for (const alias of ln.aliases) {
-                this.data.aliasesMap.set(alias.toLowerCase(), ln.displayName)
+                this.data.aliasesMap.set(alias.toLowerCase(), ln.ln)
             }
         }
 
