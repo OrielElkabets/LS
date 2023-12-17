@@ -154,7 +154,7 @@ export class LS<TLnModel> {
     setPreferredLn(fallBackLnKey: string) {
         if (this.localStorageKey != undefined) {
             const key = localStorage.getItem(this.localStorageKey)
-            if (key != undefined) {
+            if (key != null && this.$languages().includes(key)) {
                 this.setLn(key)
                 return this
             }
