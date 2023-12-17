@@ -24,7 +24,7 @@ type LnFont = {
     style: FontStyle,
 }
 
-type LsLnInfo<Tfonts extends string = string> = {
+export type LsLnInfo<Tfonts extends string = string> = {
     lsInfo: {
         direction: Direction
         fonts: Record<Tfonts, LnFont>
