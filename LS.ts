@@ -111,7 +111,7 @@ export class LS<TLnModel> {
         return new LSBuilder<TLnModel>(<T>(data: Data) => new LS<T>(data))
     }
 
-    onLnChange(handler: Action<TLnModel>, options?: { runNow?: boolean } & ({ destroyRef: DestroyRef, manualCleanup?: false } | { destroyRef?: undefined, manualCleanup: true })) {
+    onLnChange(handler: Action<TLnModel>, options?: { runNow?: boolean } & ({ destroyRef?: DestroyRef, manualCleanup?: false } | { destroyRef?: undefined, manualCleanup?: true })) {
         const cleanup = new Cleanup()
         cleanup.add(() => this.onLnChangeHandlersMap.delete(handler))
         if (options?.manualCleanup != true) {
