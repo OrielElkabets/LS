@@ -175,9 +175,9 @@ export class LS<TLnModel> {
         return this
     }
 
-    getData<Tres>(cb: (ln: TLnModel) => Tres, unsafe: true): Signal<Tres>;
-    getData<Tres>(cb: (ln: TLnModel) => Tres, unsafe?: false): Signal<Tres | undefined>;
-    getData<Tres>(cb: (ln: TLnModel) => Tres, unsafe?: boolean): Signal<Tres | undefined> | Signal<Tres> {
+    getSection<Tres>(cb: (ln: TLnModel) => Tres, unsafe: true): Signal<Tres>;
+    getSection<Tres>(cb: (ln: TLnModel) => Tres, unsafe?: false): Signal<Tres | undefined>;
+    getSection<Tres>(cb: (ln: TLnModel) => Tres, unsafe?: boolean): Signal<Tres | undefined> | Signal<Tres> {
         return computed(() => {
             if (!unsafe && this.$language() == undefined) return undefined
             return cb(this.$language()!)
