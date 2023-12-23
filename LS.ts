@@ -217,8 +217,8 @@ class LSBuilder<TLnModel, TLns extends string = string> {
         return this as LSBuilder<TLnModel & LsLnInfo<TFonts>, TLns>
     }
 
-    useLocalStorage(key: string) {
-        this.data.localStorageKey = key
+    useLocalStorage(key?: string) {
+        this.data.localStorageKey = key || "ls-ln"
         return this
     }
 
