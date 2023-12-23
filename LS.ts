@@ -217,7 +217,7 @@ class LSBuilder<TLnModel, TLns extends string = string> implements Builder1<TLnM
                 if (this.data.baseUrl == undefined) throw "to be able to provide file name insted of url you must provide base url (use setBaseUrl before ln's registration)"
             }
             
-            this.data.lnsMap.set(ln.displayName, ln)
+            this.data.lnsMap.set(key, ln)
         }
 
         return this as unknown as Builder3<TLnModel, T>
