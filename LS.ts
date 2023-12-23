@@ -75,19 +75,19 @@ export class LS<TLnModel, TLns extends string = string> {
     readonly $languages: Signal<KeyAndName<TLns>[]>
     readonly $isLnLoaded = computed(() => this.$language() != undefined)
 
-    readonly $curLnIndex = computed(() => {
-        if (this._$curLnKey() == undefined) return undefined
-        else return this.$languages().findIndex(ln => ln.key == this._$curLnKey())
-    })
+    // readonly $curLnIndex = computed(() => {
+    //     if (this._$curLnKey() == undefined) return undefined
+    //     else return this.$languages().findIndex(ln => ln.key == this._$curLnKey())
+    // })
 
     readonly $curLn = computed(() => {
         if (this._$curLnKey() == undefined) return undefined
         else return this.$languages().find(ln => ln.key == this._$curLnKey())
     })
 
-    get $curLnKey() {
-        return this._$curLnKey.asReadonly()
-    }
+    // get $curLnKey() {
+    //     return this._$curLnKey.asReadonly()
+    // }
 
     private constructor(data: Data) {
         this.client = data.client
