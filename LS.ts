@@ -62,6 +62,25 @@ class Cleanup implements IDisposable {
     }
 }
 
+type Builder1<TLnModel> = {
+    setBaseUrl(baseUrl: string): Builder2<TLnModel>
+    registerLns<T extends string = string>(lns: Record<T, { displayName: string, url: string }>): Builder3<TLnModel, T>
+}
+
+type Builder2<TLnModel> = {
+    registerLns<T extends string = string>(lns: Record<T, LnConfig>): Builder3<TLnModel, T>
+}
+
+interface Builder3<TLnModel, TLns extends string> {
+    createCssVariables<TFonts extends string>(): Builder3<TLnModel & LsLnInfo<TFonts>, TLns>
+
+    useLocalStorage(key?: string): Builder3<TLnModel, TLns>
+
+    useBrowserLn(lnAliases: Partial<Record<TLns, string[]>>): Builder3<TLnModel, TLns>
+
+    build(): LS<TLnModel, TLns>
+}
+
 export class LS<TLnModel, TLns extends string = string> {
     private readonly client: HttpClient
     private readonly baseUrl?: string
@@ -75,19 +94,10 @@ export class LS<TLnModel, TLns extends string = string> {
     readonly $languages: Signal<KeyAndName<TLns>[]>
     readonly $isLnLoaded = computed(() => this.$language() != undefined)
 
-    // readonly $curLnIndex = computed(() => {
-    //     if (this._$curLnKey() == undefined) return undefined
-    //     else return this.$languages().findIndex(ln => ln.key == this._$curLnKey())
-    // })
-
     readonly $curLn = computed(() => {
         if (this._$curLnKey() == undefined) return undefined
         else return this.$languages().find(ln => ln.key == this._$curLnKey())
     })
-
-    // get $curLnKey() {
-    //     return this._$curLnKey.asReadonly()
-    // }
 
     private constructor(data: Data) {
         this.client = data.client
@@ -111,7 +121,7 @@ export class LS<TLnModel, TLns extends string = string> {
     }
 
     static builder<TLnModel>() {
-        return new LSBuilder<TLnModel>(<T, T2 extends string>(data: Data) => new LS<T, T2>(data))
+        return new LSBuilder<TLnModel>(<T, T2 extends string>(data: Data) => new LS<T, T2>(data)) as Builder1<TLnModel>
     }
 
     onLnChange(handler: Action<TLnModel>, options?: { runNow?: boolean } & ({ destroyRef?: DestroyRef, manualCleanup?: false } | { destroyRef?: undefined, manualCleanup?: true })) {
@@ -188,7 +198,7 @@ export class LS<TLnModel, TLns extends string = string> {
     }
 }
 
-class LSBuilder<TLnModel, TLns extends string = string> {
+class LSBuilder<TLnModel, TLns extends string = string> implements Builder1<TLnModel>, Builder2<TLnModel>, Builder3<TLnModel, TLns> {
     private readonly data = new Data(inject(HttpClient))
     constructor(private createLS: <TLnModel, TLns extends string>(data: Data) => LS<TLnModel, TLns>) { }
 
@@ -197,28 +207,29 @@ class LSBuilder<TLnModel, TLns extends string = string> {
         return this
     }
 
-    // registerLns(...lns: LnConfig[]) {
     registerLns<T extends string = string>(lns: Record<T, LnConfig>) {
         for (const key in lns) {
             const ln = lns[key]
             this.data.languages.push({ key: key, displayName: ln.displayName })
 
+            //? because of types this is not supposed to happen, but for now I will leave this here.
             if (ln.fileName != undefined) {
                 if (this.data.baseUrl == undefined) throw "to be able to provide file name insted of url you must provide base url (use setBaseUrl before ln's registration)"
             }
+            
             this.data.lnsMap.set(ln.displayName, ln)
         }
 
-        return this as unknown as LSBuilder<TLnModel, T>
+        return this as unknown as Builder3<TLnModel, T>
     }
 
     createCssVariables<TFonts extends string>() {
         this.data.createCssVariables = true
-        return this as LSBuilder<TLnModel & LsLnInfo<TFonts>, TLns>
+        return this as Builder3<TLnModel & LsLnInfo<TFonts>, TLns>
     }
 
-    useLocalStorage(key?: string) {
-        this.data.localStorageKey = key || "ls-ln"
+    useLocalStorage(key = "ls-ln") {
+        this.data.localStorageKey = key
         return this
     }
 
