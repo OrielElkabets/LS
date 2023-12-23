@@ -14,7 +14,7 @@ type LnUrl = {
 
 type LnConfig = { displayName: string } & (LnName | LnUrl)
 
-type KeyAndName<T extends string> = {key: T, displayName: string}
+type KeyAndName<T extends string> = { key: T, displayName: string }
 
 type Direction = "rtl" | "ltr"
 type FontWeight = "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900" | "bold" | "normal" | "lighter"
@@ -46,11 +46,11 @@ class Data {
     constructor(public client: HttpClient) { }
 }
 
-type IDisposeable = {
+type IDisposable = {
     dispose(): void
 }
 
-class Cleanup implements IDisposeable {
+class Cleanup implements IDisposable {
     private cleanupCbs: (() => void)[] = []
     add(cb: () => void) {
         this.cleanupCbs.push(cb)
@@ -74,10 +74,12 @@ export class LS<TLnModel, TLns extends string = string> {
 
     readonly $languages: Signal<KeyAndName<TLns>[]>
     readonly $isLnLoaded = computed(() => this.$language() != undefined)
+
     readonly $curLnIndex = computed(() => {
         if (this._$curLnKey() == undefined) return undefined
         else return this.$languages().findIndex(ln => ln.key == this._$curLnKey())
     })
+
     readonly $curLn = computed(() => {
         if (this._$curLnKey() == undefined) return undefined
         else return this.$languages().find(ln => ln.key == this._$curLnKey())
@@ -122,11 +124,11 @@ export class LS<TLnModel, TLns extends string = string> {
         }
         if (options?.runNow && this.$isLnLoaded()) handler(this.$language()!)
         this.onLnChangeHandlersMap.set(handler, handler)
-        return cleanup as IDisposeable
+        return cleanup as IDisposable
     }
 
-    setLn(key: TLns) {
-        const lnConfig = this.lnsMap.get(key)
+    setLn(key: string) {
+        const lnConfig = this.lnsMap.get(key as TLns)
         if (lnConfig == undefined) throw `language map does not contain key ${key}\nmaybe you forgot to register this language?`
 
         if (this.localStorageKey != undefined) localStorage.setItem(this.localStorageKey, key)
@@ -145,7 +147,7 @@ export class LS<TLnModel, TLns extends string = string> {
                 })
             )
             .subscribe(ln => {
-                this._$curLnKey.set(key)
+                this._$curLnKey.set(key as TLns)
                 this.$language.set(ln)
             })
 
@@ -199,7 +201,7 @@ class LSBuilder<TLnModel, TLns extends string = string> {
     registerLns<T extends string = string>(lns: Record<T, LnConfig>) {
         for (const key in lns) {
             const ln = lns[key]
-            this.data.languages.push({key: key, displayName: ln.displayName})
+            this.data.languages.push({ key: key, displayName: ln.displayName })
 
             if (ln.fileName != undefined) {
                 if (this.data.baseUrl == undefined) throw "to be able to provide file name insted of url you must provide base url (use setBaseUrl before ln's registration)"
@@ -221,11 +223,11 @@ class LSBuilder<TLnModel, TLns extends string = string> {
     }
 
     // useBrowserLn(...lnAliases: LnAlias<TLns>[]) {
-    useBrowserLn(lnAliases: Record<TLns, string[]>) {
+    useBrowserLn(lnAliases: Partial<Record<TLns, string[]>>) {
         this.data.aliasesMap = new Map<string, string>()
 
         for (const key in lnAliases) {
-            const aliases = lnAliases[key]
+            const aliases = lnAliases[key] ?? []
 
             for (const alias of aliases) {
                 this.data.aliasesMap.set(alias.toLowerCase(), key)
