@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { DestroyRef, Signal, computed, inject, signal } from "@angular/core";
-import { EMPTY, catchError, tap } from "rxjs";
+import { EMPTY, catchError } from "rxjs";
 
 type LnName = {
     fileName: string,
@@ -145,20 +145,16 @@ export class LS<TLnModel, TLns extends string = string> {
 
         const url = lnConfig.url != undefined ? lnConfig.url : `${this.baseUrl}/${lnConfig.fileName}`
         this.client.get<TLnModel>(url)
-            .pipe(
-                catchError(err => {
-                    console.error(err);
-                    return EMPTY
-                }),
-                tap(ln => {
-                    for (const handler of this.onLnChangeHandlersMap.values()) {
-                        handler(ln)
-                    }
-                })
-            )
+            .pipe(catchError(err => {
+                console.error(err);
+                return EMPTY
+            }))
             .subscribe(ln => {
                 this._$curLnKey.set(key as TLns)
                 this.$language.set(ln)
+                for (const handler of this.onLnChangeHandlersMap.values()) {
+                    handler(ln)
+                }
             })
 
         return this
@@ -216,7 +212,7 @@ class LSBuilder<TLnModel, TLns extends string = string> implements Builder1<TLnM
             if (ln.fileName != undefined) {
                 if (this.data.baseUrl == undefined) throw "to be able to provide file name insted of url you must provide base url (use setBaseUrl before ln's registration)"
             }
-            
+
             this.data.lnsMap.set(key, ln)
         }
 
