@@ -46,7 +46,7 @@ class Data {
     constructor(public client: HttpClient) { }
 }
 
-type IDisposable = {
+export type IDisposable = {
     dispose(): void
 }
 
@@ -152,9 +152,11 @@ export class LS<TLnModel, TLns extends string = string> {
             .subscribe(ln => {
                 this._$curLnKey.set(key as TLns)
                 this.$language.set(ln)
-                for (const handler of this.onLnChangeHandlersMap.values()) {
-                    handler(ln)
-                }
+                setTimeout(() => {   
+                    for (const handler of this.onLnChangeHandlersMap.values()) {
+                        handler(ln)
+                    }
+                });
             })
 
         return this
