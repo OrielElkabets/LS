@@ -46,7 +46,7 @@ class Data {
     constructor(public client: HttpClient) { }
 }
 
-type IDisposable = {
+export type IDisposable = {
     dispose(): void
 }
 
